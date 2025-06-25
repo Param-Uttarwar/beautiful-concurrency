@@ -183,8 +183,9 @@ class TaskSchedulerApp:
         st.markdown("---")
         # Removed the expander to make the graph static
         if tasks_to_run: # Check if there are tasks to run before building the graph
-            fig = self._build_task_graph_plotly(tasks_to_run)
-            st.plotly_chart(fig, use_container_width=True)
+            if 'task_graph_figure' not in st.session_state:
+                st.session_state['task_graph_figure'] = self._build_task_graph_plotly(tasks_to_run)
+            st.plotly_chart(st.session_state['task_graph_figure'], use_container_width=True)
         else:
             st.info("No tasks to display in the dependency graph.")
 

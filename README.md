@@ -13,10 +13,10 @@ A Streamlit-based UI to visualize and execute concurrent tasks in Python using d
 
 To get started with `beautiful-concurrency`, you can install it directly from PyPI (once published) or set it up for local development.
 
-### From PyPI (Recommended)
+### Via pip
 
 ```bash
-pip install beautiful-concurrency
+pip install git+https://github.com/Param-Uttarwar/beautiful-concurrency.git
 ```
 
 ### For Local Development
@@ -43,9 +43,6 @@ The core of `beautiful-concurrency` is the `TaskSchedulerApp`, which allows you 
 
 The `examples/` directory contains pre-defined examples demonstrating how to use the `Task` and `Orchestrator` classes for different types of workloads.
 
-You can create your own tasks and run them using the `TaskSchedulerApp` as follows:
-
-
 ### 1. Compute-Intensive Tasks
 
 This example showcases tasks that primarily consume CPU resources, such as finding prime factors and calculating Fibonacci numbers.
@@ -66,6 +63,8 @@ To run this example:
 streamlit run examples/example_io_bound.py
 ```
 ### 3. Custom Example
+You can create your own tasks and run them using the `TaskSchedulerApp` as follows:
+
 ```python
 # Custom Example for Custom Tasks
 from beautiful_concurrency.base.task import Task
@@ -82,15 +81,15 @@ def bar(param1: str, param2: str) -> str:
     return f"Result {param1} {param2}"
 
 # Create Task instances
-task_foo = Task("Task foo", foo, ("value_a"), {})
-task_bar = Task("Task bar", bar, ("value_b", task_1), {}) # it automatically takes result of foo as input
+task_foo = Task("Task foo", foo, args = ("value_a",), kwargs = {}) 
+task_bar = Task("Task bar", bar, args = ("value_b", task_foo), kwargs = {}) # Result of task_foo is passed as an argument to task_bar
 
 # Initialize TaskSchedulerApp
 app = TaskSchedulerApp()
 
 # Add tasks to the app
-app.add_task(task_1)
-app.add_task(task_2)
+app.add_task(task_foo)
+app.add_task(task_bar)
 
 # Run the app
 app.run()
