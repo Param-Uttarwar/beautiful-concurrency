@@ -111,7 +111,7 @@ class TaskSchedulerApp:
 
     def run(self) -> None:
         st.set_page_config(layout="wide")
-        st.title("Task Orchestrator with Gantt Chart")
+        st.title("Beautiful Concurrency")
 
         # Sidebar for mode selection
         st.sidebar.header("Configuration")
@@ -129,7 +129,7 @@ class TaskSchedulerApp:
             tasks_to_run = self.tasks
 
         if st.button("Run Tasks"):
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([1, 3])
             
             with col1:
                 start_app_time = time.perf_counter()

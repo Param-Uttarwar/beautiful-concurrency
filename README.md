@@ -2,6 +2,8 @@
 
 A Streamlit-based UI to visualize and execute concurrent tasks in Python using different execution models (sequential, threading, multiprocessing, asyncio). This project helps in understanding how various concurrency paradigms affect task execution and overall performance, especially when tasks have dependencies.
 
+![Beautiful Concurrency](./assets/screenshot.png)
+
 ## Features
 
 - **Task Orchestration**: Define tasks with inter-dependencies.
