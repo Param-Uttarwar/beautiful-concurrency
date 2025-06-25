@@ -17,22 +17,22 @@ class TaskSchedulerApp:
         """Adds a task to the scheduler."""
         self.tasks.append(task)
 
-    def _long_running_task(self, task_name, duration, parents=None):
+    def _long_running_task(self, task_name: str, duration: float) -> str:
         """Simulates a long-running task."""
         st.info(f"Running {task_name}...")
         time.sleep(duration)
         return f"{task_name} completed"
 
-    def _create_default_tasks(self):
+    def _create_default_tasks(self) -> list[Task]:
         """Creates a set of example tasks with dependencies."""
         t1 = Task("Task A", self._long_running_task, ("Task A", 2), {})
-        t2 = Task("Task B", self._long_running_task, ("Task B", 3), {'parents': [t1]})
+        t2 = Task("Task B", self._long_running_task, ("Task B", 3), {})
         t3 = Task("Task C", self._long_running_task, ("Task C", 1), {})
         t4 = Task("Task D", self._long_running_task, ("Task D", 4), {})
 
         return [t1, t2, t3, t4]
 
-    def _build_task_graph_plotly(self, tasks: list[Task]):
+    def _build_task_graph_plotly(self, tasks: list[Task]) -> go.Figure:
         """Build a Plotly graph visualization for task dependencies."""
         G = nx.DiGraph()
 
@@ -109,7 +109,7 @@ class TaskSchedulerApp:
                         )
         return fig
 
-    def run(self):
+    def run(self) -> None:
         st.set_page_config(layout="wide")
         st.title("Task Orchestrator with Gantt Chart")
 
@@ -190,17 +190,6 @@ class TaskSchedulerApp:
 
 
 
-        # st.write("### How to Use:")
-        # st.write("1. Select an execution mode from the sidebar.")
-        # st.write("2. Click the 'Run Tasks' button.")
-        # st.write("3. Observe the task execution and the generated Gantt chart.")
-
-
 if __name__ == '__main__':
     app = TaskSchedulerApp()
-    # You can add custom tasks here before running the app
-    # Example:
-    # def my_custom_func(x, y):
-    #     return x + y
-    # app.add_task(Task("Custom Task 1", my_custom_func, (10, 20), {}))
     app.run()

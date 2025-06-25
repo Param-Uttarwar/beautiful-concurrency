@@ -9,7 +9,7 @@ class Task:
     """
     _id_counter = 0
 
-    def __init__(self, name: str, func: callable, args, kwargs):
+    def __init__(self, name: str, func: callable, args: tuple, kwargs: dict):
         """
         Initializes a Task instance.
 
@@ -27,11 +27,11 @@ class Task:
         self.kwargs = kwargs
 
         self.state: Status = Status.PENDING
-        self.time_started = None
-        self.time_completed = None
+        self.time_started: float | None = None
+        self.time_completed: float | None = None
         self._result = NOT_COMPUTED  # This is where the output will be stored
-        self._parents = set()  # Tasks that this task depends on
-        self._children = set() # Tasks that depend on this task
+        self._parents: set[Task] = set()  # Tasks that this task depends on
+        self._children: set[Task] = set() # Tasks that depend on this task
         self._set_dependencies()
 
     def _set_dependencies(self) -> None:
@@ -58,7 +58,7 @@ class Task:
                         item._children.add(self)
                         self._parents.add(item)
 
-    def __call__(self) -> None:
+    def __call__(self) -> Task:
         """
         Execute the task function with the provided arguments and store the result.
         Updates the task's state and timing information.
@@ -81,10 +81,10 @@ class Task:
         return self
 
     @property
-    def result(self):
+    def result(self) -> any:
         return self._result
 
-    def _resolve_args(self, args):
+    def _resolve_args(self, args: tuple | list) -> tuple | list:
         resolved = []
         for arg in args:
             if isinstance(arg, Task):
@@ -97,7 +97,7 @@ class Task:
                 resolved.append(arg)
         return tuple(resolved) if isinstance(args, tuple) else resolved
 
-    def _resolve_kwargs(self, kwargs):
+    def _resolve_kwargs(self, kwargs: dict) -> dict:
         resolved = {}
         for key, value in kwargs.items():
             if isinstance(value, Task):

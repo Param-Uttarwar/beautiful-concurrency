@@ -21,7 +21,7 @@ class Orchestrator:
         pass
 
 
-    def run(self, tasks: list[Task], mode: str = "sequential"):
+    def run(self, tasks: list[Task], mode: str = "sequential") -> None:
         """
         Run a list of tasks using the specified mode.
         :param tasks: List of tasks to run.
@@ -41,7 +41,7 @@ class Orchestrator:
             raise ValueError(f"Unknown execution mode: {mode}")
 
 
-    def _build_task_graph(self, tasks: list[Task]) -> tuple:
+    def _build_task_graph(self, tasks: list[Task]) -> tuple[tuple[Task, ...], ...]:
         """
         Build a directed acyclic graph (DAG) of tasks based on their dependencies.
         This is an internal method that organizes tasks into a structure that can be executed.
@@ -49,12 +49,12 @@ class Orchestrator:
         in_degree = {task.id: len(task._parents) for task in tasks}
         task_map = {task.id: task for task in tasks}
         
-        stages = []
-        current_stage_tasks = [task_map[task_id] for task_id, degree in in_degree.items() if degree == 0]
+        stages: list[tuple[Task, ...]] = []
+        current_stage_tasks: list[Task] = [task_map[task_id] for task_id, degree in in_degree.items() if degree == 0]
 
         while current_stage_tasks:
             stages.append(tuple(current_stage_tasks))
-            next_stage_tasks = []
+            next_stage_tasks: list[Task] = []
             for task in current_stage_tasks:
                 for child_task in task._children:
                     in_degree[child_task.id] -= 1
@@ -68,7 +68,7 @@ class Orchestrator:
         return tuple(stages)
 
 
-    def _run_sequential(self, stages: tuple[tuple[Task, ...], ...]):
+    def _run_sequential(self, stages: tuple[tuple[Task, ...], ...]) -> None:
         """
         Executes tasks sequentially, stage by stage.
         """
@@ -76,7 +76,7 @@ class Orchestrator:
             for task in stage:
                 task()
 
-    def _run_with_threading(self, stages: tuple[tuple[Task, ...], ...]):
+    def _run_with_threading(self, stages: tuple[tuple[Task, ...], ...]) -> None:
         """
         Executes tasks using a ThreadPoolExecutor, stage by stage.
         """
@@ -86,7 +86,7 @@ class Orchestrator:
                 for future in concurrent.futures.as_completed(futures):
                     future.result() # To propagate exceptions
 
-    def _run_with_multiprocessing(self, stages: tuple[tuple[Task, ...], ...]):
+    def _run_with_multiprocessing(self, stages: tuple[tuple[Task, ...], ...]) -> None:
         """
         Executes tasks using a ProcessPoolExecutor, stage by stage.
         """
@@ -101,14 +101,14 @@ class Orchestrator:
                     original_task.time_completed = updated_task.time_completed
                     original_task._result = updated_task._result # Update the result as well
 
-    async def _run_with_asyncio(self, stages: tuple[tuple[Task, ...], ...]):
+    async def _run_with_asyncio(self, stages: tuple[tuple[Task, ...], ...]) -> None:
         """
         Executes tasks using asyncio, stage by stage.
         """
         for stage in stages:
             await asyncio.gather(*[self._run_async_task(task) for task in stage])
 
-    async def _run_async_task(self, task: Task):
+    async def _run_async_task(self, task: Task) -> None:
         """
         Wrapper to run a Task asynchronously.
         """
