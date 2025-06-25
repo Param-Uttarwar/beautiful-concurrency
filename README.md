@@ -96,3 +96,8 @@ app.add_task(task_bar)
 # Run the app
 app.run()
 ```
+
+- Run 
+  - ```bash
+    streamlit run your_script.py
+    ```
