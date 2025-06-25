@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+import networkx as nx
 import time
 from beautiful_concurrency.base.task import Task
 from beautiful_concurrency.base.orchestrator import Orchestrator
@@ -15,7 +17,7 @@ class TaskSchedulerApp:
         """Adds a task to the scheduler."""
         self.tasks.append(task)
 
-    def _long_running_task(self, task_name, duration):
+    def _long_running_task(self, task_name, duration, parents=None):
         """Simulates a long-running task."""
         st.info(f"Running {task_name}...")
         time.sleep(duration)
@@ -24,11 +26,88 @@ class TaskSchedulerApp:
     def _create_default_tasks(self):
         """Creates a set of example tasks with dependencies."""
         t1 = Task("Task A", self._long_running_task, ("Task A", 2), {})
-        t2 = Task("Task B", self._long_running_task, ("Task B", 3), {})
+        t2 = Task("Task B", self._long_running_task, ("Task B", 3), {'parents': [t1]})
         t3 = Task("Task C", self._long_running_task, ("Task C", 1), {})
         t4 = Task("Task D", self._long_running_task, ("Task D", 4), {})
 
         return [t1, t2, t3, t4]
+
+    def _build_task_graph_plotly(self, tasks: list[Task]):
+        """Build a Plotly graph visualization for task dependencies."""
+        G = nx.DiGraph()
+
+        for task in tasks:
+            G.add_node(task.id, name=task.name)
+
+        for task in tasks:
+            for parent in task._parents:
+                G.add_edge(parent.id, task.id)
+
+        pos = nx.spring_layout(G)
+
+        edge_x = []
+        edge_y = []
+        for edge in G.edges():
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+            edge_x.append(x0)
+            edge_x.append(x1)
+            edge_x.append(None)
+            edge_y.append(y0)
+            edge_y.append(y1)
+            edge_y.append(None)
+
+        node_x = []
+        node_y = []
+        node_text = []
+        for node in G.nodes():
+            x, y = pos[node]
+            node_x.append(x)
+            node_y.append(y)
+            node_text.append(G.nodes[node]['name'])
+
+        node_trace = go.Scatter(
+            x=node_x,
+            y=node_y,
+            mode='markers+text',
+            hoverinfo='text',
+            text=node_text,
+            textposition="top center",
+            marker=dict(
+                showscale=False,
+                color='lightblue',
+                size=40,
+                line_width=5))
+
+        annotations = []
+        for edge in G.edges():
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+            annotations.append(
+                dict(
+                    ax=x0, ay=y0,
+                    axref='x', ayref='y',
+                    x=x1, y=y1,
+                    xref='x', yref='y',
+                    showarrow=True,
+                    #arrowhead=1,
+                    arrowsize=1,
+                    arrowwidth=5,
+                    arrowcolor='#888'
+                )
+            )
+
+        fig = go.Figure(data=[node_trace],
+                     layout=go.Layout(
+                        title='Task Dependency Graph',
+                        showlegend=False,
+                        hovermode='closest',
+                        margin=dict(b=20,l=5,r=5,t=40),
+                        annotations=annotations,
+                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+                        )
+        return fig
 
     def run(self):
         st.set_page_config(layout="wide")
@@ -42,17 +121,17 @@ class TaskSchedulerApp:
         # Main content area
         st.header(f"Selected Mode: {selected_mode.capitalize()}")
 
+        if not self.tasks:
+            st.write("No tasks added, running with default example tasks...")
+            tasks_to_run = self._create_default_tasks()
+        else:
+            st.write(f"Running {len(self.tasks)} custom tasks...")
+            tasks_to_run = self.tasks
+
         if st.button("Run Tasks"):
             col1, col2 = st.columns(2)
             
             with col1:
-                if not self.tasks:
-                    st.write("No tasks added, running with default example tasks...")
-                    tasks_to_run = self._create_default_tasks()
-                else:
-                    st.write(f"Running {len(self.tasks)} custom tasks...")
-                    tasks_to_run = self.tasks
-                
                 start_app_time = time.perf_counter()
                 try:
                     self.orchestrator.run(tasks_to_run, mode=selected_mode)
@@ -99,6 +178,16 @@ class TaskSchedulerApp:
 
                 else:
                     st.warning("No task data available to generate Gantt chart. Ensure tasks ran successfully.")
+
+        # Add horizontal line for visual separation
+        st.markdown("---")
+        # Removed the expander to make the graph static
+        if tasks_to_run: # Check if there are tasks to run before building the graph
+            fig = self._build_task_graph_plotly(tasks_to_run)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No tasks to display in the dependency graph.")
+
 
 
         # st.write("### How to Use:")

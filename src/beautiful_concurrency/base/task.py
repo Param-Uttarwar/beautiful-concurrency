@@ -42,11 +42,21 @@ class Task:
             if isinstance(arg, Task):
                 arg._children.add(self)
                 self._parents.add(arg)
+            if isinstance(arg, (list, tuple)):
+                for item in arg:
+                    if isinstance(item, Task):
+                        item._children.add(self)
+                        self._parents.add(item)
 
         for value in self.kwargs.values():
             if isinstance(value, Task):
                 value._children.add(self)
                 self._parents.add(value)
+            if isinstance(value, (list, tuple)):
+                for item in value:
+                    if isinstance(item, Task):
+                        item._children.add(self)
+                        self._parents.add(item)
 
     def __call__(self) -> None:
         """
@@ -68,6 +78,7 @@ class Task:
             raise e
 
         self.time_completed = time.perf_counter()
+        return self
 
     @property
     def result(self):

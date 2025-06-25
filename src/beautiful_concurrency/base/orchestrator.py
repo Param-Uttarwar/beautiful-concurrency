@@ -92,9 +92,14 @@ class Orchestrator:
         """
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for stage in stages:
-                futures = [executor.submit(task) for task in stage]
+                futures = {executor.submit(task): task for task in stage}
                 for future in concurrent.futures.as_completed(futures):
-                    future.result() # To propagate exceptions
+                    original_task = futures[future]
+                    updated_task = future.result() # This will be the task object returned by __call__
+                    original_task.state = updated_task.state
+                    original_task.time_started = updated_task.time_started
+                    original_task.time_completed = updated_task.time_completed
+                    original_task._result = updated_task._result # Update the result as well
 
     async def _run_with_asyncio(self, stages: tuple[tuple[Task, ...], ...]):
         """
